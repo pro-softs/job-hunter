@@ -5,4 +5,4 @@ Score = how well the post matches the resume (not a hiring chance).
 
 No new matching jobs today.
 
-<sub>Checked 131 job posts today. Left out: not a QA title: 94, too old: 17, score below minimum: 6, experience range: 6.</sub>
+<sub>Checked 131 job posts today. Left out: not a QA title: 94, too old: 17, no posting date: 14, score below minimum: 4, experience range: 1.</sub>

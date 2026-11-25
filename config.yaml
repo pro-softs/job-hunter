@@ -1,0 +1,96 @@
+# Job Hunter settings for Supriya (Senior QA, manual-heavy).
+# Edit this file on GitHub to change what the daily search looks for.
+
+# Only keep jobs posted within this many days. Jobs with no date are kept
+# but marked "date unknown" and scored lower.
+max_age_days: 3
+
+# Only email jobs with a match score at or above this (0-100).
+min_score: 55
+
+# Candidate's experience in years. Jobs whose range excludes this
+# (for example 8-12 or 2-5) are dropped.
+candidate_years: 7.3
+# Allow roles whose minimum is up to this many years above the candidate.
+stretch_years: 0.7
+
+# Places that count as a match. Remote / work from home roles anywhere in
+# India also count.
+locations: ["bengaluru", "bangalore", "karnataka"]
+allow_remote_india: true
+
+# ---------------------------------------------------------------- sources
+# Each source is skipped automatically if its API key is not set.
+
+serpapi:              # Google Jobs (covers LinkedIn, Naukri, Indeed, foundit, company sites)
+  queries:
+    - "manual QA lead Bengaluru"
+    - "senior manual tester Bangalore"
+    - "functional test lead UAT Bengaluru"
+    - "manual QA remote India"
+  location: "Bengaluru, Karnataka, India"
+  pages_per_query: 1   # 1 page = 10 jobs = 1 search credit
+
+adzuna:
+  country: "in"
+  queries:
+    - "manual testing"
+    - "QA lead"
+    - "test lead"
+    - "functional tester"
+  where: "Bangalore"
+  results_per_page: 50
+
+jooble:
+  queries:
+    - "manual QA tester"
+    - "test lead manual testing"
+  location: "Bengaluru"
+
+# Company career boards with public job feeds (no key needed).
+# Add a company by its board name, as it appears in its careers URL:
+#   Greenhouse: boards.greenhouse.io/<name>     -> greenhouse: [<name>]
+#   Lever:      jobs.lever.co/<name>            -> lever: [<name>]
+#   SmartRecruiters: jobs.smartrecruiters.com/<name> -> smartrecruiters: [<name>]
+#   Ashby:      jobs.ashbyhq.com/<name>         -> ashby: [<name>]
+company_boards:
+  greenhouse: []
+  lever: []
+  smartrecruiters: ["BoschGroup"]
+  ashby: []
+
+# ---------------------------------------------------------------- scoring
+# Title must look like a QA / testing role.
+title_must_match: '\b(qa|quality (analyst|assurance|engineer)|test(er|ing)?|uat|sdet)\b'
+# Titles to drop outright.
+title_exclude: '\b(intern|internship|fresher|trainee|junior|jr\.?|director|vp|head of|architect|performance|security|penetration|hardware|mechanical|manufacturing|quality control|qc inspector|quality inspector|supplier quality|food|pharma|clinical|data quality|automotive|embedded|validation engineer)\b'
+
+# Keyword weights. Matched in title + description (case-insensitive).
+weights:
+  manual_core:            # what makes it a manual-heavy role
+    words: ["manual", "functional testing", "functional tester", "uat", "user acceptance", "regression", "exploratory", "test case", "test scenario", "test plan", "end-to-end", "e2e", "sit"]
+    points: 6
+    cap: 30
+  her_tools:
+    words: ["postman", "api testing", "jira", "azure devops", "sql", "browserstack", "mobile testing", "android", "ios", "cross-browser", "playwright", "figma", "sap"]
+    points: 3
+    cap: 15
+  domain:
+    words: ["insurance", "policy", "claims", "fintech", "payments", "payment gateway", "banking", "bfsi", "lending", "kyc", "e-commerce", "ecommerce", "retail"]
+    points: 4
+    cap: 16
+  lead:
+    words: ["lead", "mentor", "team of", "test strategy", "test planning", "estimation", "stakeholder"]
+    points: 3
+    cap: 9
+  ai:
+    words: ["ai tools", "ai-assisted", "chatgpt", "copilot", "claude", "genai", "llm"]
+    points: 3
+    cap: 6
+  automation_heavy:       # penalty: roles that are really automation-only
+    words: ["sdet", "selenium", "java", "testng", "cucumber", "rest assured", "appium", "cypress", "python", "jenkins", "ci/cd", "framework development", "automation framework"]
+    points: -4
+    cap: -24
+
+# Email: sent only if SMTP_USER, SMTP_PASSWORD and EMAIL_TO are set.
+email_subject: "QA job matches"

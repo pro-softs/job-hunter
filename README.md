@@ -29,7 +29,7 @@ You need: a GitHub account and one free API key (SerpApi). No Gmail setup is nee
 
 | Key | Where | Notes |
 |---|---|---|
-| `SERPAPI_KEY` | serpapi.com → Sign up → Dashboard → API key | **Most important.** One run uses 4 searches, about 120 a month. Check your monthly limit on SerpApi's plan page. If it's lower, delete a query in `config.yaml`. |
+| `SERPAPI_KEY` | serpapi.com → Sign up → Dashboard → API key | **Most important.** The free plan allows 250 searches a month. One run uses 7 searches, about 210 a month. |
 | `ADZUNA_APP_ID` and `ADZUNA_APP_KEY` | developer.adzuna.com → Register | If the first run shows "Adzuna: FAILED", Adzuna doesn't cover India for your key. Just leave it; the other sources still run. |
 | `JOOBLE_KEY` | in.jooble.org/api/about → fill in the form | Free keys may have a limited number of requests in total. The config uses 2 per day. |
 
@@ -68,7 +68,7 @@ Edit `config.yaml` on GitHub (click the file → pencil icon):
 - `keep_unstated_experience`: set to `true` to also see jobs that don't mention years of experience.
 - `keep_unknown_dates`: set to `true` to also see jobs with no posting date. These are often old.
 - `min_score`: raise it to get fewer, better matches; lower it to get more.
-- `serpapi.queries`: the search phrases, for example add `"insurance QA analyst Bengaluru"`.
+- `serpapi.queries`: the search phrases, one search each per day. Keep the total at 8 or fewer on the free plan. Add `| India` (or another place) after a phrase to search there instead of Bengaluru.
 - `locations`: add `"hyderabad"` or `"pune"` to include those cities.
 - `company_boards`: add companies whose career sites run on Greenhouse, Lever, SmartRecruiters or Ashby. The careers page address tells you which, for example `jobs.lever.co/<name>`.
 - `weights`: words that raise or lower the score.

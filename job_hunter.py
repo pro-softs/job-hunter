@@ -190,10 +190,12 @@ def src_serpapi(cfg: dict) -> list[dict]:
         return []
     c = cfg["serpapi"]
     jobs, failed = [], []
-    for q in c["queries"]:
+    for entry in c["queries"]:
+        q, _, place = (part.strip() for part in str(entry).partition("|"))
         token = None
         for _ in range(max(1, int(c.get("pages_per_query", 1)))):
-            params = {"engine": "google_jobs", "q": q, "location": c["location"], "gl": "in", "hl": "en", "api_key": key}
+            params = {"engine": "google_jobs", "q": q, "location": place or c["location"], "gl": "in", "hl": "en",
+                      "google_domain": c.get("google_domain", "google.co.in"), "api_key": key}
             if token:
                 params["next_page_token"] = token
             try:  # Google Jobs searches can take 30-60 s; one slow query must not stop the rest

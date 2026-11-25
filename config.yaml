@@ -24,14 +24,20 @@ allow_remote_india: true
 # ---------------------------------------------------------------- sources
 # Each source is skipped automatically if its API key is not set.
 
-serpapi:              # Google Jobs (covers LinkedIn, Naukri, Indeed, foundit, company sites)
+serpapi:              # Google Jobs India (covers Naukri, LinkedIn, Indeed India, foundit, Instahyre, company sites)
+  # Free plan = 250 searches a month. 7 searches a day = about 210 a month.
+  # Each line is one search. Add "| <place>" to search a different place.
   queries:
-    - "manual QA lead Bengaluru"
-    - "senior manual tester Bangalore"
-    - "functional test lead UAT Bengaluru"
-    - "manual QA remote India"
+    - "manual testing jobs in Bangalore"
+    - "senior test engineer manual testing Bengaluru"
+    - "QA lead manual testing Bangalore"
+    - "test lead functional testing Bengaluru"
+    - "insurance domain testing jobs Bangalore"
+    - "UAT tester banking fintech Bangalore"
+    - "manual testing work from home | India"
   location: "Bengaluru, Karnataka, India"
-  pages_per_query: 1   # 1 page = 10 jobs = 1 search credit
+  google_domain: "google.co.in"
+  pages_per_query: 1   # 1 page = 10 jobs = 1 search
 
 adzuna:
   country: "in"

@@ -5,7 +5,8 @@ A small program that runs every morning at **8:30 AM IST** on GitHub's computers
 Each run:
 
 1. Searches for jobs (not companies) in several places:
-   - **Google Jobs**, through SerpApi. This covers LinkedIn, Naukri, Indeed, foundit and company career sites.
+   - **Naukri** and **LinkedIn**, live, through Apify scrapers. These are the main sources: they read the sites' own search pages, so closed jobs don't show up.
+   - **Google Jobs India**, through SerpApi. Results copied by republishing sites (JobLeads, BeBee, Talent.com and others), which often keep closed jobs up, are dropped.
    - **Adzuna** and **Jooble**, two job search engines.
    - **Company career boards** you list in `config.yaml`. Bosch is already added.
 2. Keeps only jobs that are:
@@ -23,13 +24,14 @@ Each run:
 
 ## One-time setup (about 10 minutes)
 
-You need: a GitHub account and one free API key (SerpApi). No Gmail setup is needed.
+You need: a GitHub account and two free keys (Apify and SerpApi). No Gmail setup is needed.
 
 ### 1. Get the free API keys
 
 | Key | Where | Notes |
 |---|---|---|
-| `SERPAPI_KEY` | serpapi.com → Sign up → Dashboard → API key | **Most important.** The free plan allows 250 searches a month. One run uses 7 searches, about 210 a month. |
+| `APIFY_TOKEN` | apify.com → Sign up (free) → **Settings → API & Integrations** → copy the **Personal API token** | **Most important.** Runs the Naukri and LinkedIn scrapers. The free plan includes $5 of usage a month; the default settings use about $3–4. |
+| `SERPAPI_KEY` | serpapi.com → Sign up → Dashboard → API key | The free plan allows 250 searches a month. One run uses 7 searches, about 210 a month. |
 | `ADZUNA_APP_ID` and `ADZUNA_APP_KEY` | developer.adzuna.com → Register | If the first run shows "Adzuna: FAILED", Adzuna doesn't cover India for your key. Just leave it; the other sources still run. |
 | `JOOBLE_KEY` | in.jooble.org/api/about → fill in the form | Free keys may have a limited number of requests in total. The config uses 2 per day. |
 
@@ -70,6 +72,8 @@ Edit `config.yaml` on GitHub (click the file → pencil icon):
 - `min_score`: raise it to get fewer, better matches; lower it to get more.
 - `serpapi.queries`: the search phrases, one search each per day. Keep the total at 8 or fewer on the free plan. Add `| India` (or another place) after a phrase to search there instead of Bengaluru.
 - `locations`: add `"hyderabad"` or `"pune"` to include those cities.
+- `apify.naukri.queries` / `apify.linkedin.queries`: what to search on Naukri and LinkedIn. Add `| remote` or `| india` to a line to search outside Bengaluru. More lines cost more Apify credit.
+- `serpapi.skip_sites`: republishing sites to ignore in Google Jobs results.
 - `company_boards`: add companies whose career sites run on Greenhouse, Lever, SmartRecruiters or Ashby. The careers page address tells you which, for example `jobs.lever.co/<name>`.
 - `weights`: words that raise or lower the score.
 
@@ -82,7 +86,7 @@ Edit `config.yaml` on GitHub (click the file → pencil icon):
 
 ## Notes
 
-- LinkedIn and Naukri are reached through Google Jobs, not scraped directly. Scraping those sites breaks their rules and gets blocked quickly.
+- Naukri and LinkedIn are read through Apify scrapers. This goes against those sites' terms of use; Apify runs the scraping on its own servers, so nothing is run from your accounts or computer.
 - If a source fails one day, the others still run, and the day's list says which one failed.
 - To get the GitHub notifications on your phone, install the GitHub app and sign in. To get them by email instead, check github.com → Settings → Notifications.
 - Email through Gmail is optional. To use it later, add `SMTP_USER`, `SMTP_PASSWORD` (a Gmail app password) and `EMAIL_TO` as secrets.

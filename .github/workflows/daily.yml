@@ -32,6 +32,7 @@ jobs:
 
       - name: Find and email new matching jobs
         env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
           ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}

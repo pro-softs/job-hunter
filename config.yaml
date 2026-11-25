@@ -37,7 +37,34 @@ serpapi:              # Google Jobs India (covers Naukri, LinkedIn, Indeed India
     - "manual testing work from home | India"
   location: "Bengaluru, Karnataka, India"
   google_domain: "google.co.in"
+  # Sites that copy job posts and keep them up after they close. Results from these are dropped.
+  skip_sites: ["JobLeads", "BeBee", "Talent.com", "UpNxtWork", "Getmereferred", "Jobgether", "Jooble", "Adzuna", "Expertini", "Whatjobs", "Jobrapido", "Careerjet", "Joblist", "SimplyHired", "Recruit.net", "Learn4Good"]
   pages_per_query: 1   # 1 page = 10 jobs = 1 search
+
+# ---------------------------------------------------------------- Apify scrapers
+# Live results straight from Naukri and LinkedIn. Needs the APIFY_TOKEN secret.
+# Apify's free plan gives $5 of usage a month; these settings use about $3-4.
+apify:
+  naukri:
+    actor: "quarra/naukri-jobs-scraper"
+    location: "bangalore"
+    experience_years: 7        # Naukri's own filter: jobs whose range includes 7 years
+    max_per_search: 30
+    queries:                   # add "| remote" or "| india" to search elsewhere
+      - "manual testing"
+      - "manual test lead"
+      - "qa lead manual testing"
+      - "functional testing"
+      - "insurance domain testing"
+      - "manual testing | remote"
+  linkedin:
+    actor: "curious_coder/linkedin-jobs-scraper"
+    location: "Bengaluru, Karnataka, India"
+    max_per_search: 25
+    queries:
+      - "manual testing"
+      - "manual QA lead"
+      - "manual QA | india"
 
 adzuna:
   country: "in"

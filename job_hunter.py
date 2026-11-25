@@ -38,6 +38,7 @@ IST = dt.timezone(dt.timedelta(hours=5, minutes=30))
 NOW = dt.datetime.now(dt.timezone.utc)
 SOURCE_WARNINGS: list[str] = []   # partial failures to show in the report
 RUN_STATS: dict = {}
+STATS_SKIPPED_SITES = [0]   # Google Jobs results dropped because they came from republishing sites
 
 
 def log(msg: str) -> None:
@@ -57,8 +58,8 @@ def parse_age_days(value) -> float | None:
     """Turn '3 days ago', '22 hours ago', ISO dates or epoch ms into age in days."""
     if value is None or value == "":
         return None
-    if isinstance(value, (int, float)):  # epoch milliseconds (Lever)
-        ts = dt.datetime.fromtimestamp(value / 1000, dt.timezone.utc)
+    if isinstance(value, (int, float)):  # epoch milliseconds (Lever, LinkedIn) or seconds
+        ts = dt.datetime.fromtimestamp(value / 1000 if value > 1e11 else value, dt.timezone.utc)
         return (NOW - ts).total_seconds() / 86400
     s = str(value).strip().lower()
     if s in ("today", "just now", "just posted") or "minute" in s or "moment" in s:
@@ -145,6 +146,8 @@ def make_job(**kw) -> dict:
         "description": strip_html(kw.get("description"))[:6000],
         "source": kw.get("source", ""),
         "remote": bool(kw.get("remote")),
+        "exp_lo": kw.get("exp_lo"),      # structured experience from Naukri, if given
+        "exp_hi": kw.get("exp_hi"),
     }
     if job["age_days"] is None:
         job["age_days"] = parse_age_days(job["posted_raw"])
@@ -208,7 +211,12 @@ def src_serpapi(cfg: dict) -> list[dict]:
                 if "hasn't returned any results" not in data["error"]:
                     failed.append(f"'{q}': {data['error']}")
                 break
+            skip_via = [s.lower() for s in c.get("skip_sites", [])]
             for it in data.get("jobs_results", []):
+                via = (it.get("via") or "").lower()
+                if any(s in via for s in skip_via):
+                    STATS_SKIPPED_SITES[0] += 1
+                    continue
                 ext = it.get("detected_extensions") or {}
                 jobs.append(make_job(
                     title=it.get("title", ""), company=it.get("company_name"), location=it.get("location"),
@@ -316,13 +324,96 @@ def src_ashby(name: str) -> list[dict]:
                      remote=j.get("isRemote")) for j in data.get("jobs", [])]
 
 
+# ------------------------------------------------------------------ Apify scrapers (Naukri, LinkedIn)
+def apify_run(actor: str, run_input: dict, token: str) -> list[dict]:
+    """Run an Apify actor and return its results (waits up to 5 minutes)."""
+    url = f"https://api.apify.com/v2/acts/{actor.replace('/', '~')}/run-sync-get-dataset-items"
+    return get_json("POST", url, timeout=330, retries=1, params={"token": token, "timeout": 300},
+                    json=run_input)
+
+
+def naukri_url(query: str, cfg: dict) -> str:
+    """Build a Naukri search link with Naukri's own experience and freshness filters."""
+    c = cfg["apify"]["naukri"]
+    q, _, place = (s.strip() for s in query.partition("|"))
+    slug = re.sub(r"[^a-z0-9]+", "-", q.lower()).strip("-")
+    place = (place or c.get("location", "bangalore")).lower()
+    path = f"{slug}-jobs" if place in ("", "india", "remote") else f"{slug}-jobs-in-{re.sub(r'[^a-z0-9]+', '-', place)}"
+    params = {"experience": c.get("experience_years", 7), "jobAge": cfg["max_age_days"]}
+    if place == "remote" or "work from home" in q.lower():
+        params["wfhType"] = 2
+    return f"https://www.naukri.com/{path}?" + "&".join(f"{k}={v}" for k, v in params.items())
+
+
+def src_naukri(cfg: dict) -> list[dict]:
+    token = os.getenv("APIFY_TOKEN")
+    if not token:
+        log("  Naukri (Apify): skipped (no APIFY_TOKEN)")
+        return []
+    c = cfg["apify"]["naukri"]
+    urls = [naukri_url(q, cfg) for q in c["queries"]]
+    items = apify_run(c["actor"], {
+        "startUrls": urls, "sortBy": "date", "includeDetails": True,
+        "maxJobsPerSearch": c.get("max_per_search", 30), "maxItems": c.get("max_per_search", 30) * len(urls),
+    }, token)
+    jobs = []
+    for it in items:
+        if it.get("type") not in (None, "job") or it.get("status") not in (None, "ok"):
+            continue
+        jobs.append(make_job(
+            title=it.get("title", ""), company=it.get("company"), location=", ".join(it.get("locations") or []),
+            link=it.get("url"), posted_raw=it.get("postedAt"),
+            description=" ".join(filter(None, [it.get("summary"), it.get("description"), " ".join(it.get("skills") or [])])),
+            source="Naukri", remote=(str(it.get("workplaceType", "")).lower() == "remote"),
+            exp_lo=it.get("experienceMin"), exp_hi=it.get("experienceMax"),
+        ))
+    log(f"  Naukri (Apify): {len(jobs)} jobs")
+    return jobs
+
+
+def linkedin_url(query: str, cfg: dict) -> str:
+    c = cfg["apify"]["linkedin"]
+    q, _, place = (s.strip() for s in query.partition("|"))
+    params = {"keywords": q, "location": place or c.get("location", "Bengaluru, Karnataka, India"),
+              "f_TPR": f"r{int(cfg['max_age_days']) * 86400}", "f_E": "3,4", "sortBy": "DD"}
+    if place.lower() in ("india", "remote"):
+        params["location"] = "India"
+        params["f_WT"] = "2"
+    return "https://www.linkedin.com/jobs/search/?" + "&".join(f"{k}={requests.utils.quote(str(v))}" for k, v in params.items())
+
+
+def src_linkedin(cfg: dict) -> list[dict]:
+    token = os.getenv("APIFY_TOKEN")
+    if not token:
+        log("  LinkedIn (Apify): skipped (no APIFY_TOKEN)")
+        return []
+    c = cfg["apify"]["linkedin"]
+    items = apify_run(c["actor"], {
+        "urls": [linkedin_url(q, cfg) for q in c["queries"]], "scrapeCompany": False,
+        "autoConvertToAiSearch": False, "limitPerSource": c.get("max_per_search", 25),
+    }, token)
+    jobs = []
+    for it in items:
+        posted = it.get("postedAtTimestamp") or it.get("postedAt")
+        jobs.append(make_job(
+            title=it.get("title", ""), company=it.get("companyName"), location=it.get("location"),
+            link=it.get("link") or it.get("applyUrl"),
+            age_days=parse_age_days(posted) if posted else None,
+            description=it.get("descriptionText"), source="LinkedIn",
+            remote=bool(it.get("workRemoteAllowed")),
+        ))
+    log(f"  LinkedIn (Apify): {len(jobs)} jobs")
+    return jobs
+
+
 BOARD_FETCHERS = {"greenhouse": src_greenhouse, "lever": src_lever,
                   "smartrecruiters": src_smartrecruiters, "ashby": src_ashby}
 
 
 def collect(cfg: dict) -> tuple[list[dict], list[str]]:
     jobs, errors = [], []
-    for name, fn in [("SerpApi", src_serpapi), ("Adzuna", src_adzuna), ("Jooble", src_jooble)]:
+    for name, fn in [("Naukri", src_naukri), ("LinkedIn", src_linkedin), ("SerpApi", src_serpapi),
+                     ("Adzuna", src_adzuna), ("Jooble", src_jooble)]:
         try:
             jobs += fn(cfg)
         except Exception as e:  # keep going if one source fails
@@ -403,7 +494,10 @@ def evaluate(jobs: list[dict], cfg: dict) -> list[dict]:
             drop("too old"); continue
         if not location_ok(j, cfg):
             drop("location"); continue
-        lo, hi = parse_experience(f"{j['title']} {j['description']}")
+        if j.get("exp_lo") is not None:
+            lo, hi = float(j["exp_lo"]), (float(j["exp_hi"]) if j.get("exp_hi") is not None else None)
+        else:
+            lo, hi = parse_experience(f"{j['title']} {j['description']}")
         if not experience_ok(lo, hi, cfg):
             drop("experience range"); continue
         s, why = score(j, cfg)
@@ -412,11 +506,14 @@ def evaluate(jobs: list[dict], cfg: dict) -> list[dict]:
         j.update(score=s, why="; ".join(why), exp=exp_label(lo, hi), key=job_key(j))
         kept.append(j)
     log(f"  Dropped: {dropped}")
-    RUN_STATS.update(collected=len(jobs), dropped=dropped)
+    if STATS_SKIPPED_SITES[0]:
+        dropped["republishing site (often closed)"] = STATS_SKIPPED_SITES[0]
+    RUN_STATS.update(collected=len(jobs) + STATS_SKIPPED_SITES[0], dropped=dropped)
     # de-duplicate within this run (same job from several sources): keep best score
     best = {}
     for j in kept:
-        if j["key"] not in best or j["score"] > best[j["key"]]["score"]:
+        rank = lambda job: (job["score"], job["source"] in ("Naukri", "LinkedIn"))
+        if j["key"] not in best or rank(j) > rank(best[j["key"]]):
             best[j["key"]] = j
     return sorted(best.values(), key=lambda j: (-j["score"], j["age_days"] if j["age_days"] is not None else 99))
 

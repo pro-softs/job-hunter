@@ -87,18 +87,34 @@ EXP_RE = re.compile(
 
 
 def parse_experience(text: str) -> tuple[float | None, float | None]:
-    """Find the first plausible 'X-Y years' / 'X+ years' requirement."""
-    for m in EXP_RE.finditer(text or ""):
+    """Find the overall experience requirement.
+
+    Job posts often list several ('6+ years overall, 2+ years in API testing'),
+    so take the requirement with the largest minimum, which is the overall one.
+    'Minimum 5 years and maximum of 8 years' is read as 5-8.
+    """
+    text = text or ""
+    found = []
+    for m in EXP_RE.finditer(text):
         lo = float(m.group(1))
         hi = float(m.group(2)) if m.group(2) else None
         if lo > 25 or (hi is not None and (hi > 30 or hi < lo)):
             continue
-        # skip company-age phrases like "40 years of industry expertise"
-        context = text[max(0, m.start() - 40): m.end() + 40].lower()
-        if re.search(r"(founded|history|track record|industry expertise|in business|legacy)", context):
+        before = text[max(0, m.start() - 20): m.start()].lower()
+        after = text[m.end(): m.end() + 35].lower()
+        # skip company-age phrases like "over 40 years of industry expertise"
+        if re.search(r"founded|since", before) or re.search(
+                r"^\W*(of )?(industry|expertise|history|in business|legacy|track record|serving|excellence|old\b)", after):
             continue
-        return lo, hi
-    return None, None
+        # "maximum of 8 years" / "up to 8 years" is the top of the range, not a minimum
+        if re.search(r"(max(imum)?( of)?|up ?to)\s*$", before):
+            if found and found[-1][1] is None and found[-1][0] <= lo:
+                found[-1] = (found[-1][0], lo)
+            continue
+        found.append((lo, hi))
+    if not found:
+        return None, None
+    return max(found, key=lambda r: r[0])
 
 
 def exp_label(lo, hi) -> str:
@@ -338,14 +354,10 @@ def location_ok(job: dict, cfg: dict) -> bool:
 
 
 def experience_ok(lo, hi, cfg: dict) -> bool:
-    yrs = cfg["candidate_years"]
+    """Keep a job only if its minimum required years is between min_years_from and min_years_to."""
     if lo is None:
-        return True
-    if lo > yrs + cfg.get("stretch_years", 0):
-        return False
-    if hi is not None and hi < yrs - 1.5:   # e.g. 2-5 yrs is too junior
-        return False
-    return True
+        return bool(cfg.get("keep_unstated_experience", False))
+    return cfg["min_years_from"] <= lo <= cfg["min_years_to"]
 
 
 def score(job: dict, cfg: dict) -> tuple[int, list[str]]:
@@ -362,9 +374,6 @@ def score(job: dict, cfg: dict) -> tuple[int, list[str]]:
     if "manual" in job["title"].lower() or "functional" in job["title"].lower() or "uat" in job["title"].lower():
         total += 8
         why.append("manual in title +8")
-    if job["age_days"] is None:
-        total -= 5
-        why.append("date unknown -5")
     return max(0, min(100, total)), why
 
 
@@ -456,14 +465,14 @@ def email_html(new: list[dict], errors: list[str], today: str) -> str:
     return (f"<div style='font-family:Arial,sans-serif;max-width:640px'>"
             f"<h2 style='margin:0 0 4px'>QA job matches – {today}</h2>"
             f"<p style='color:#57606a;margin:0 0 12px'>{len(new)} new roles · manual-QA focus · Bengaluru or remote · "
-            f"posted in the last few days. Score = how well the post matches the resume (not a hiring chance).</p>"
+            f"posted in the last 15 days, minimum experience 4–7 years. Score = how well the post matches the resume (not a hiring chance).</p>"
             f"<table style='border-collapse:collapse;width:100%'><tr><th align='left' style='padding:8px'>Role</th>"
             f"<th style='padding:8px'>Score</th></tr>{body}</table>{err}</div>")
 
 
 def markdown_report(new: list[dict], errors: list[str], today: str) -> str:
     lines = [f"# QA job matches – {today}", "",
-             f"**{len(new)} new roles** · manual-QA focus · Bengaluru or remote · posted in the last few days.",
+             f"**{len(new)} new roles** · manual-QA focus · Bengaluru or remote · minimum experience 4–7 years · posting date confirmed.",
              "Score = how well the post matches the resume (not a hiring chance).", ""]
     if new:
         lines += ["| Score | Role | Company | Location | Experience | Posted | Source |",

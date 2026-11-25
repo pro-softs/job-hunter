@@ -2,19 +2,19 @@
 # Edit this file on GitHub to change what the daily search looks for.
 
 # Only keep jobs posted within this many days.
-max_age_days: 3
+max_age_days: 15
 # Jobs with no posting date are usually old reposts. false = leave them out.
 keep_unknown_dates: false
 
 # Only email jobs with a match score at or above this (0-100).
 min_score: 55
 
-# Candidate's experience in years. Jobs whose range excludes this
-# (for example 8-12 or 2-5) are dropped.
-candidate_years: 7.3
-# Allow roles whose minimum is up to this many years above the candidate.
-# 0 means a role asking for 8+ years is left out.
-stretch_years: 0
+# Experience: keep only jobs whose MINIMUM requirement is in this range.
+# 4-7 keeps "4+", "5-8", "6+", "7+ years"; drops "2+", "3-5", "8+", "10-15".
+min_years_from: 4
+min_years_to: 7
+# Jobs that don't state any years of experience. false = leave them out.
+keep_unstated_experience: false
 
 # Places that count as a match. Remote / work from home roles anywhere in
 # India also count.

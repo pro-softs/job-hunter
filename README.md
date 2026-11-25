@@ -9,10 +9,10 @@ Each run:
    - **Adzuna** and **Jooble**, two job search engines.
    - **Company career boards** you list in `config.yaml`. Bosch is already added.
 2. Keeps only jobs that are:
-   - posted in the **last 3 days**, with a known posting date. Undated listings are usually old reposts, so they're left out.
+   - posted in the **last 15 days**, with a known posting date. Undated listings are usually old reposts, so they're left out.
    - a **QA / testing** role, with automation-only, junior, hardware and other unrelated titles removed
    - in **Bengaluru**, or **remote in India**
-   - asking for an experience range that **includes ~7 years**, so 8–12 or 2–5 are dropped
+   - asking for a **minimum of 4 to 7 years** of experience, so "4+", "5–8" and "6+" pass but "2+", "3–5" and "8+" are dropped. Jobs that don't state any experience are left out.
 3. Gives each job a **match score (0–100)** for how well the post fits the resume. It rewards manual, functional, UAT and regression work, Postman, JIRA and SQL, the insurance, payments, fintech and e-commerce domains, and lead duties. It lowers the score for automation-heavy roles that need Selenium, Java or SDET skills. The score is not a hiring chance.
 4. Skips anything it already showed you, then posts the new jobs with **direct links** in GitHub:
    - as a **GitHub issue** each morning. GitHub notifies you by email and in the GitHub mobile app.
@@ -63,7 +63,9 @@ After about 1 minute, open the run: the job list is shown on the run page, and a
 
 Edit `config.yaml` on GitHub (click the file → pencil icon):
 
-- `max_age_days`: how recent a job must be (default 3).
+- `max_age_days`: how recent a job must be (default 15).
+- `min_years_from` / `min_years_to`: the range the job's minimum experience must fall in (default 4–7).
+- `keep_unstated_experience`: set to `true` to also see jobs that don't mention years of experience.
 - `keep_unknown_dates`: set to `true` to also see jobs with no posting date. These are often old.
 - `min_score`: raise it to get fewer, better matches; lower it to get more.
 - `serpapi.queries`: the search phrases, for example add `"insurance QA analyst Bengaluru"`.

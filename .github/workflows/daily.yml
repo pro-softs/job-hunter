@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: "0 3 * * *"   # 03:00 UTC = 08:30 IST, every day
   workflow_dispatch: {}    # adds a "Run workflow" button for manual runs
+  push:                    # re-run automatically when the script or settings change
+    branches: [main]
+    paths: ["job_hunter.py", "config.yaml", "requirements.txt", ".github/workflows/daily.yml"]
 
 permissions:
   contents: write          # lets the run save data/ (seen jobs + CSVs) back to the repo
@@ -16,7 +19,7 @@ concurrency:
 jobs:
   search:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 

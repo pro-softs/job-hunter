@@ -36,6 +36,8 @@ TIMEOUT = 25
 UA = {"User-Agent": "job-hunter/1.0 (personal job search)"}
 IST = dt.timezone(dt.timedelta(hours=5, minutes=30))
 NOW = dt.datetime.now(dt.timezone.utc)
+SOURCE_WARNINGS: list[str] = []   # partial failures to show in the report
+RUN_STATS: dict = {}
 
 
 def log(msg: str) -> None:
@@ -134,10 +136,22 @@ def make_job(**kw) -> dict:
 
 
 # ------------------------------------------------------------------ sources
-def get_json(method: str, url: str, **kw):
-    r = requests.request(method, url, timeout=TIMEOUT, headers={**UA, **kw.pop("headers", {})}, **kw)
-    r.raise_for_status()
-    return r.json()
+def get_json(method: str, url: str, timeout: int = TIMEOUT, retries: int = 2, **kw):
+    """Request JSON, retrying slow or temporarily failing answers."""
+    import time
+    headers = {**UA, **kw.pop("headers", {})}
+    for attempt in range(retries + 1):
+        try:
+            r = requests.request(method, url, timeout=timeout, headers=headers, **kw)
+            if r.status_code in (429, 500, 502, 503, 504) and attempt < retries:
+                time.sleep(5 * (attempt + 1))
+                continue
+            r.raise_for_status()
+            return r.json()
+        except (requests.Timeout, requests.ConnectionError):
+            if attempt >= retries:
+                raise
+            time.sleep(5 * (attempt + 1))
 
 
 def best_apply_link(item: dict) -> str:
@@ -159,14 +173,23 @@ def src_serpapi(cfg: dict) -> list[dict]:
         log("  SerpApi: skipped (no SERPAPI_KEY)")
         return []
     c = cfg["serpapi"]
-    jobs = []
+    jobs, failed = [], []
     for q in c["queries"]:
         token = None
         for _ in range(max(1, int(c.get("pages_per_query", 1)))):
             params = {"engine": "google_jobs", "q": q, "location": c["location"], "gl": "in", "hl": "en", "api_key": key}
             if token:
                 params["next_page_token"] = token
-            data = get_json("GET", "https://serpapi.com/search.json", params=params)
+            try:  # Google Jobs searches can take 30-60 s; one slow query must not stop the rest
+                data = get_json("GET", "https://serpapi.com/search.json", timeout=90, params=params)
+            except Exception as e:
+                failed.append(f"'{q}': {type(e).__name__}")
+                log(f"  SerpApi query '{q}' failed: {e}")
+                break
+            if data.get("error"):
+                if "hasn't returned any results" not in data["error"]:
+                    failed.append(f"'{q}': {data['error']}")
+                break
             for it in data.get("jobs_results", []):
                 ext = it.get("detected_extensions") or {}
                 jobs.append(make_job(
@@ -179,6 +202,10 @@ def src_serpapi(cfg: dict) -> list[dict]:
             if not token:
                 break
     log(f"  SerpApi: {len(jobs)} jobs")
+    if failed and not jobs:
+        raise RuntimeError("all searches failed – " + "; ".join(failed))
+    if failed:
+        SOURCE_WARNINGS.append("SerpApi: " + "; ".join(failed))
     return jobs
 
 
@@ -368,6 +395,7 @@ def evaluate(jobs: list[dict], cfg: dict) -> list[dict]:
         j.update(score=s, why="; ".join(why), exp=exp_label(lo, hi), key=job_key(j))
         kept.append(j)
     log(f"  Dropped: {dropped}")
+    RUN_STATS.update(collected=len(jobs), dropped=dropped)
     # de-duplicate within this run (same job from several sources): keep best score
     best = {}
     for j in kept:
@@ -443,8 +471,12 @@ def markdown_report(new: list[dict], errors: list[str], today: str) -> str:
                          f"{cell(j['location'])} | {cell(j['exp'])} | {posted_label(j)} | {cell(j['source'])} |")
     else:
         lines.append("No new matching jobs today.")
-    if errors:
-        lines += ["", "_Some sources failed today: " + "; ".join(errors) + "_"]
+    problems = errors + SOURCE_WARNINGS
+    if problems:
+        lines += ["", "_Some sources had problems today: " + "; ".join(problems) + "_"]
+    if RUN_STATS:
+        d = ", ".join(f"{k}: {v}" for k, v in sorted(RUN_STATS.get("dropped", {}).items(), key=lambda kv: -kv[1]))
+        lines += ["", f"<sub>Checked {RUN_STATS.get('collected', 0)} job posts today. Left out: {d or 'none'}.</sub>"]
     return "\n".join(lines) + "\n"
 
 

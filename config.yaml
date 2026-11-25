@@ -12,7 +12,8 @@ min_score: 55
 # (for example 8-12 or 2-5) are dropped.
 candidate_years: 7.3
 # Allow roles whose minimum is up to this many years above the candidate.
-stretch_years: 0.7
+# 0 means a role asking for 8+ years is left out.
+stretch_years: 0
 
 # Places that count as a match. Remote / work from home roles anywhere in
 # India also count.

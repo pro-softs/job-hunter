@@ -194,7 +194,8 @@ def src_serpapi(cfg: dict) -> list[dict]:
                 ext = it.get("detected_extensions") or {}
                 jobs.append(make_job(
                     title=it.get("title", ""), company=it.get("company_name"), location=it.get("location"),
-                    link=best_apply_link(it), posted_raw=ext.get("posted_at"),
+                    link=best_apply_link(it), posted_raw=ext.get("posted_at") or next(
+                        (e for e in it.get("extensions", []) if re.search(r"ago|today|yesterday|just", str(e), re.I)), None),
                     description=it.get("description"), source=f"Google Jobs ({it.get('via', '').replace('via ', '')})",
                     remote=ext.get("work_from_home"),
                 ))

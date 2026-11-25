@@ -1,9 +1,10 @@
 # Job Hunter settings for Supriya (Senior QA, manual-heavy).
 # Edit this file on GitHub to change what the daily search looks for.
 
-# Only keep jobs posted within this many days. Jobs with no date are kept
-# but marked "date unknown" and scored lower.
+# Only keep jobs posted within this many days.
 max_age_days: 3
+# Jobs with no posting date are usually old reposts. false = leave them out.
+keep_unknown_dates: false
 
 # Only email jobs with a match score at or above this (0-100).
 min_score: 55

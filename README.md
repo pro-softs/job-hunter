@@ -9,7 +9,7 @@ Each run:
    - **Adzuna** and **Jooble**, two job search engines.
    - **Company career boards** you list in `config.yaml`. Bosch is already added.
 2. Keeps only jobs that are:
-   - posted in the **last 3 days**
+   - posted in the **last 3 days**, with a known posting date. Undated listings are usually old reposts, so they're left out.
    - a **QA / testing** role, with automation-only, junior, hardware and other unrelated titles removed
    - in **Bengaluru**, or **remote in India**
    - asking for an experience range that **includes ~7 years**, so 8–12 or 2–5 are dropped
@@ -64,6 +64,7 @@ After about 1 minute, open the run: the job list is shown on the run page, and a
 Edit `config.yaml` on GitHub (click the file → pencil icon):
 
 - `max_age_days`: how recent a job must be (default 3).
+- `keep_unknown_dates`: set to `true` to also see jobs with no posting date. These are often old.
 - `min_score`: raise it to get fewer, better matches; lower it to get more.
 - `serpapi.queries`: the search phrases, for example add `"insurance QA analyst Bengaluru"`.
 - `locations`: add `"hyderabad"` or `"pune"` to include those cities.

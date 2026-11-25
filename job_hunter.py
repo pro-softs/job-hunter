@@ -383,6 +383,8 @@ def evaluate(jobs: list[dict], cfg: dict) -> list[dict]:
             drop("not a QA title"); continue
         if excl.search(j["title"]):
             drop("excluded title"); continue
+        if j["age_days"] is None and not cfg.get("keep_unknown_dates", False):
+            drop("no posting date"); continue
         if j["age_days"] is not None and j["age_days"] > cfg["max_age_days"]:
             drop("too old"); continue
         if not location_ok(j, cfg):

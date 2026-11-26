@@ -1,6 +1,6 @@
 # QA Job Hunter
 
-A small program that runs every morning at **8:30 AM IST** on GitHub's computers (free), so your Mac can be off.
+A small program that runs every morning at **8:17 AM IST** (with a backup attempt at 10:17 if GitHub skips the first) on GitHub's computers (free), so your Mac can be off.
 
 Each run:
 

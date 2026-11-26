@@ -2,7 +2,10 @@ name: Daily QA job search
 
 on:
   schedule:
-    - cron: "0 3 * * *"   # 03:00 UTC = 08:30 IST, every day
+    # GitHub sometimes delays or skips jobs set on the hour, so use odd minutes,
+    # with a backup run that does nothing if the morning run already happened.
+    - cron: "47 2 * * *"   # 02:47 UTC = 08:17 IST
+    - cron: "47 4 * * *"   # 04:47 UTC = 10:17 IST (backup)
   workflow_dispatch: {}    # adds a "Run workflow" button for manual runs
   push:                    # re-run automatically when the script or settings change
     branches: [main]
@@ -23,14 +26,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Skip the backup run if today's run already happened
+        id: guard
+        run: |
+          today=$(TZ=Asia/Kolkata date +%F)
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(cat data/last_run.txt 2>/dev/null)" = "$today" ]; then
+            echo "Already ran today ($today); nothing to do."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-python@v5
+        if: steps.guard.outputs.skip != 'true'
         with:
           python-version: "3.12"
           cache: pip
 
       - run: pip install -r requirements.txt
+        if: steps.guard.outputs.skip != 'true'
 
-      - name: Find and email new matching jobs
+      - name: Find new matching jobs
+        if: steps.guard.outputs.skip != 'true'
         env:
           APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
@@ -43,7 +58,7 @@ jobs:
         run: python job_hunter.py
 
       - name: Post today's jobs as a GitHub issue
-        if: success()
+        if: success() && steps.guard.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -55,7 +70,7 @@ jobs:
           fi
 
       - name: Save results to the repo
-        if: always()
+        if: always() && steps.guard.outputs.skip != 'true'
         run: |
           git config user.name "job-hunter-bot"
           git config user.email "job-hunter-bot@users.noreply.github.com"

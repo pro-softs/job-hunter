@@ -639,6 +639,7 @@ def main() -> int:
     report = markdown_report(new, errors, today)
     (DATA / "latest.md").write_text(report, encoding="utf-8")
     (DATA / "new_count.txt").write_text(str(len(new)))
+    (DATA / "last_run.txt").write_text(today)
     if os.getenv("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
             f.write(report)

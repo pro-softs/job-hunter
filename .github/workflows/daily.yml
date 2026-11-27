@@ -4,8 +4,14 @@ on:
   schedule:
     # GitHub sometimes delays or skips jobs set on the hour, so use odd minutes,
     # with a backup run that does nothing if the morning run already happened.
-    - cron: "47 2 * * *"   # 02:47 UTC = 08:17 IST
-    - cron: "47 4 * * *"   # 04:47 UTC = 10:17 IST (backup)
+    # GitHub often starts scheduled runs hours late, so try several times each
+    # morning. The first one that starts does the search; the rest skip.
+    - cron: "17 1 * * *"   # 06:47 IST
+    - cron: "47 2 * * *"   # 08:17 IST
+    - cron: "47 3 * * *"   # 09:17 IST
+    - cron: "47 4 * * *"   # 10:17 IST
+    - cron: "47 6 * * *"   # 12:17 IST
+    - cron: "47 9 * * *"   # 15:17 IST
   workflow_dispatch: {}    # adds a "Run workflow" button for manual runs
   push:                    # re-run automatically when the script or settings change
     branches: [main]
@@ -30,7 +36,7 @@ jobs:
         id: guard
         run: |
           today=$(TZ=Asia/Kolkata date +%F)
-          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(cat data/last_run.txt 2>/dev/null)" = "$today" ]; then
+          if [ "${{ github.event_name }}" != "push" ] && [ "$(cat data/last_run.txt 2>/dev/null)" = "$today" ]; then
             echo "Already ran today ($today); nothing to do."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi

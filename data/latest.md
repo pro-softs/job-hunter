@@ -1,14 +1,15 @@
-# QA job matches – 2026-11-26
+# QA job matches – 2026-11-27
 
-**5 new roles** · manual-QA focus · Bengaluru or remote · minimum experience 4–7 years · posting date confirmed.
+**6 new roles** · manual-QA focus · Bengaluru or remote · minimum experience 4–7 years · posting date confirmed.
 Score = how well the post matches the resume (not a hiring chance).
 
 | Score | Role | Company | Location | Experience | Posted | Source |
 |---|---|---|---|---|---|---|
-| 80 | [Sr Tester - Mobile Application](https://in.linkedin.com/jobs/view/sr-tester-mobile-application-at-ascendion-4495267213?position=12&pageNum=0&refId=uMd9JoMvcItjdAAMThuwJw%3D%3D&trackingId=Ps1MOqjMAM7eULHExRaymA%3D%3D) | Ascendion | Greater Bengaluru Area | 7+ yrs | Today | LinkedIn |
-| 73 | [Walk-in // Manual Test Engineer](https://www.naukri.com/job-listings-manual-test-engineer-itc-infotech-bengaluru-6-to-10-years-261126024213) | ITC Infotech | Bengaluru | 6–10 yrs | Today | Naukri |
-| 71 | [Senior Software QA Engineer](https://www.naukri.com/job-listings-senior-software-qa-engineer-monty-telecom-development-bengaluru-5-to-12-years-261126022047) | Monty Telecom Development | Bengaluru | 5–12 yrs | Today | Naukri |
-| 64 | [Etl Test Engineer](https://www.naukri.com/job-listings-etl-test-engineer-andor-tech-bengaluru-7-to-12-years-261126010528) | Andor Tech | Bengaluru | 7–12 yrs | Today | Naukri |
-| 60 | [Senior Test Analyst](https://www.naukri.com/job-listings-senior-test-analyst-altimetrik-bengaluru-5-to-8-years-261126011872) | Altimetrik | Bengaluru | 5–8 yrs | Today | Naukri |
+| 78 | [Software Engineer in Testing - Guidewire](https://www.naukri.com/job-listings-software-engineer-in-testing-guidewire-epam-systems-gurugram-coimbatore-bengaluru-5-to-8-years-051126025402) | Epam Systems | Gurugram, Coimbatore, Bengaluru | 5–8 yrs | Today | Naukri |
+| 75 | [Senior Test Engineer-  Manual Testing(Medical Platforms)](https://in.linkedin.com/jobs/view/senior-test-engineer-manual-testing-medical-platforms-at-nest-digital-4495506806?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic) | NeST Digital | Bengaluru, Karnataka | 4–6 yrs | 1 day ago | Google Jobs (LinkedIn) |
+| 75 | [Senior Test Engineer- Manual Testing(Medical Platforms)](https://in.linkedin.com/jobs/view/senior-test-engineer-manual-testing-medical-platforms-at-nest-digital-4493804989?position=12&pageNum=0&refId=alxoL890EyZCBNhgNH6wWQ%3D%3D&trackingId=ztPzJG3rL8B%2BNWF8CIzxBw%3D%3D) | NeST Digital | Bengaluru, Karnataka, India | 4–6 yrs | 1 day ago | LinkedIn |
+| 64 | [Infios/High Jump/Korber QA Analyst](https://www.naukri.com/job-listings-infios-high-jump-korber-qa-analyst-geeksoft-consulting-pvt-ltd-bengaluru-5-to-10-years-261126505883) | Geeksoft | Bengaluru | 5–10 yrs | Today | Naukri |
+| 61 | [Functional Tester - Payments and Cards Domain For LTI Mindtree](https://www.naukri.com/job-listings-functional-tester-payments-and-cards-domain-for-lti-mindtree-intellics-global-services-pune-bengaluru-mumbai-all-areas-5-to-8-years-261126038646) | Intellics Global Services | Pune, Bengaluru, Mumbai (All Areas) | 5–8 yrs | Today | Naukri |
+| 57 | [Servicenow Tester](https://www.naukri.com/job-listings-servicenow-tester-independent-recruitment-consultant-freelancer-bangalore-rural-bengaluru-5-to-10-years-261126037910) | Independent Recruitment Consultant (freelancer) | Bangalore Rural, Bengaluru | 5–10 yrs | Today | Naukri |
 
-<sub>Checked 411 job posts today. Left out: not a QA title: 202, experience range: 54, score below minimum: 42, location: 23, republishing site (often closed): 17, no posting date: 16, automation-only title: 14, too old: 11, excluded title: 4.</sub>
+<sub>Checked 408 job posts today. Left out: not a QA title: 219, experience range: 56, automation-only title: 25, score below minimum: 17, location: 16, no posting date: 15, too old: 14, republishing site (often closed): 10, excluded title: 7.</sub>

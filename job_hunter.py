@@ -131,7 +131,7 @@ def norm(s: str) -> str:
 
 
 def job_key(job: dict) -> str:
-    base = f"{norm(job['company'])}|{norm(job['title'])}|{norm(job['location'])[:30]}"
+    base = f"{norm(job['company'])}|{norm(job['title'])}"   # same company + title = same job, whatever the site
     return hashlib.sha1(base.encode()).hexdigest()[:16]
 
 
